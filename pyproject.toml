@@ -1,0 +1,17 @@
+[project]
+name = "pdpcli"
+version = "0.1.0"
+description = "Piggy's data processing CLI (PDPCLI) utility"
+readme = "README.md"
+authors = [
+    { name = "Amber.Mu", email = "nopig@pupiggy.com" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+pdpcli = "pdpcli.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
