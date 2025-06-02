@@ -28,7 +28,7 @@ y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
 # Check the correlation bwtween the variables
 for col in X.columns:
     if np.issubdtype(X[col].dtype, np.datetime64):
-        continue  # 跳过 datetime 列
+        continue 
     corr = np.corrcoef(X[col], y)[0, 1]
     if abs(corr) > 0.95:
         print(f"⚠️ WARNING: High correlation between {col} and target ({corr:.3f}) — possible leakage.")
