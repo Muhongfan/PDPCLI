@@ -23,10 +23,8 @@ step_map = {
 
 def parse_datetime_column(df, time_col):
     if time_col in df.columns:
-        # 强制使用 utc=True，确保兼容 mixed timezone
         df[time_col] = pd.to_datetime(df[time_col], errors='coerce', utc=True)
 
-        # 只有当成功转换为 datetimelike 时才移除 tz
         if pd.api.types.is_datetime64tz_dtype(df[time_col]):
             df[time_col] = df[time_col].dt.tz_convert(None)
 
@@ -202,9 +200,18 @@ def apply_preprocessing(data_path, steps, output_path, time_col, target_col=None
             print(f"📐 After {step}, shape = {df.shape}")
 
         elif step == "R4" and time_col in df.columns:
+            if not pd.api.types.is_datetime64_any_dtype(df[time_col]):
+                df[time_col] = pd.to_datetime(df[time_col])
+
+            df["month"] = df[time_col].dt.month
+            df["day"] = df[time_col].dt.day
             df["hour"] = df[time_col].dt.hour
             df["weekday"] = df[time_col].dt.weekday
-            df["month"] = df[time_col].dt.month
+            df["dayofyear"] = df[time_col].dt.dayofyear
+            df["hour_sin"] = np.sin(2 * np.pi * df["hour"] / 24)
+            df["hour_cos"] = np.cos(2 * np.pi * df["hour"] / 24)
+            df["is_weekend"] = (df["weekday"] >= 5).astype(int)
+
             print(f"📐 After {step}, shape = {df.shape}")
 
         elif step == "R5":

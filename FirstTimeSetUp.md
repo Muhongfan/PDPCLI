@@ -3,4 +3,8 @@
 * `pip install uv`
 * `uv init --package` since we already had a project, `uv init project_name --package` to initialize a new project.
 * Add the logic file under `src/pdpcli`
-* `uv pip install -e .` to excute make the CLI command pdpcli is available with `pdpcli -h`
+* `uv venv .venv` Add a new venv named as `.venv`
+* `source .venv/bin/activate` to active the venv
+* `uv pip install -e .` to install `pdpcli` under `.venv/bin/`.
+* Check the avaliable CLI command pdpcli `pdpcli -h`
+
