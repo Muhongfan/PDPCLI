@@ -6,13 +6,13 @@ def main():
     parser = argparse.ArgumentParser(prog='pdpcli', description= "Piggy's data processing CLI (PDPCLI) utility")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # pdpcli recommend -d input.csv  -> R1 R2 R3...
+    # pdpcli recommend -d input.csv  -t TARGET --time TIME -> R1 R2 R3...
     recommend_parser = subparsers.add_parser("recommend", help = "Recommend data preprocessing steps")
     recommend_parser.add_argument("-d", "--raw_data", required=True, help="Path to CSV dataset file (CSV format).")
     recommend_parser.add_argument("-t", "--target", default=None, help="Target column name (optional).")
     recommend_parser.add_argument("--time", default="timestamp", help="Timestamp column name (default: timestamp)")
 
-    # pdpcli apply --data data.csv --steps R1 R3 --output processed.csv -> output.file
+    # pdpcli apply --data data.csv --steps R1 R3  -t TARGET --time TIME  --output processed.csv -> output.file
     apply_parser = subparsers.add_parser("apply", help="Apply preprocessing steps to dataset.")
     apply_parser.add_argument("-d", "--raw_data", required=True, help="Path to CSV dataset file (CSV format).")
     apply_parser.add_argument("-t", "--target", default=None, help="Target column name (optional).")
@@ -24,11 +24,11 @@ def main():
         action="store_true",
         help="Apply data preprocessing steps in recommended execution order"
     )
-    # pdpcli validate --data data.csv
+    # pdpcli validate --data data.csv --time TIME 
     validate_parser = subparsers.add_parser("validate", help="Validate the correlations of the varialbes")
     validate_parser.add_argument("-d", "--raw_data", required=True, help="Path to CSV dataset file (CSV format).")
     validate_parser.add_argument("--time", default="timestamp", help="Timestamp column name (default: timestamp)")
-
+    # pdpcli evaluate --data data.csv --processed_file processed_file.csv  -t TARGET --time TIME 
     evaluate_parser = subparsers.add_parser("evaluate", help="Evaluate forecasting models on raw and processed data.")
     evaluate_parser.add_argument(
         "-d", "--raw_data",
