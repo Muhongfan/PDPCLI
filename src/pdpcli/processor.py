@@ -46,7 +46,8 @@ def get_columns_excluding_target(df, target):
 
 def recommend_preprocessing(data_path, time_col, target_col=None):
     print(f"\n📊 Analyzing dataset: {data_path}")
-    df = pd.read_csv(data_path)
+    df = pd.read_csv(data_path)\
+    
     # df = recommend_preprocessing(df, target_col)
 
     if time_col in df.columns:
