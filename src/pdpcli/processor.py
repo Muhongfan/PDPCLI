@@ -1,11 +1,8 @@
 # pdpcli/processor.py
-
 import pandas as pd
 import numpy as np
-from scipy import stats
 from scipy.fft import fft, fftfreq
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
 from statsmodels.tsa.stattools import adfuller
 
 step_map = {
@@ -18,20 +15,27 @@ step_map = {
     "R7": "Create lag features",
     "R8": "Differencing (make stationary)",
     "R9": "Smoothing (e.g., moving average)",
-    "R10": "FFT transform (frequency domain analysis)"
+    "R10": "FFT transform (frequency domain analysis)",
 }
 
-def parse_datetime_column(df, time_col):
+
+def parse_datetime_column(df: pd.DataFrame, time_col: str) -> pd.DataFrame:
     if time_col in df.columns:
-        df[time_col] = pd.to_datetime(df[time_col], errors='coerce', utc=True)
+        df[time_col] = pd.to_datetime(df[time_col], errors="coerce", utc=True)
 
         if pd.api.types.is_datetime64tz_dtype(df[time_col]):
             df[time_col] = df[time_col].dt.tz_convert(None)
 
     return df
+
+
 def apply_r5_outlier_removal(df: pd.DataFrame, exclude_cols=None) -> pd.DataFrame:
     exclude_cols = exclude_cols or []
-    numeric_cols = [col for col in df.select_dtypes(include=["number"]).columns if col not in exclude_cols]
+    numeric_cols = [
+        col
+        for col in df.select_dtypes(include=["number"]).columns
+        if col not in exclude_cols
+    ]
     for col in numeric_cols:
         q1 = df[col].quantile(0.25)
         q3 = df[col].quantile(0.75)
@@ -41,13 +45,19 @@ def apply_r5_outlier_removal(df: pd.DataFrame, exclude_cols=None) -> pd.DataFram
         df = df[(df[col] >= lower) & (df[col] <= upper)]
     return df
 
-def get_columns_excluding_target(df, target):
+
+def get_columns_excluding_target(df: pd.DataFrame, target: str):
     return [col for col in df.columns if col != target]
 
-def recommend_preprocessing(data_path, time_col, target_col=None):
+
+def recommend_preprocessing(
+    data_path,
+    time_col,
+    target_col=None,
+):
+
     print(f"\n📊 Analyzing dataset: {data_path}")
-    df = pd.read_csv(data_path)\
-    
+    df = pd.read_csv(data_path)
     # df = recommend_preprocessing(df, target_col)
 
     if time_col in df.columns:
@@ -148,21 +158,25 @@ def recommend_preprocessing(data_path, time_col, target_col=None):
 
     print("\n📌 End of recommendations.")
 
+
 STEP_ORDER = ["R1", "R5", "R2", "R6", "R8", "R9", "R7", "R3", "R4", "R10"]
 
-def apply_preprocessing(data_path, steps, output_path, time_col, target_col=None, auto_order=False):
+
+def apply_preprocessing(
+    data_path, steps, output_path, time_col, target_col=None, auto_order=False
+):
     df = pd.read_csv(data_path)
     df = parse_datetime_column(df, time_col)
+    df = df.dropna()
     df.sort_values(by=time_col, inplace=True)
 
     if time_col in df.columns:
         try:
             df[time_col] = pd.to_datetime(df[time_col], dayfirst=True, errors="raise")
         except Exception:
-            df[time_col] = pd.to_datetime(df[time_col], format="%d.%m.%Y-%H:%M", errors="coerce")
-
-
-        # df[time_col] = pd.to_datetime(df[time_col], errors='coerce')
+            df[time_col] = pd.to_datetime(
+                df[time_col], format="%d.%m.%Y-%H:%M", errors="coerce"
+            )
 
     if auto_order:
         print("⚙️  Sorting steps in recommended execution order.")
@@ -178,14 +192,17 @@ def apply_preprocessing(data_path, steps, output_path, time_col, target_col=None
 
             print(f"📐 After {step}, shape = {df.shape}")
 
-
         elif step == "R2":
-            numeric_cols = df.select_dtypes(include=[np.number]).columns.drop(target_col, errors='ignore')
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.drop(
+                target_col, errors="ignore"
+            )
             existing_numeric_cols = [col for col in numeric_cols if col in df.columns]
 
             if len(existing_numeric_cols) > 0 and not df[existing_numeric_cols].empty:
                 scaler = StandardScaler()
-                df[existing_numeric_cols] = scaler.fit_transform(df[existing_numeric_cols])
+                df[existing_numeric_cols] = scaler.fit_transform(
+                    df[existing_numeric_cols]
+                )
             else:
                 print("⚠️ Skipping standardization: no valid numeric columns with data.")
             print(f"📐 After {step}, shape = {df.shape}")
@@ -233,7 +250,9 @@ def apply_preprocessing(data_path, steps, output_path, time_col, target_col=None
             print(f"📐 After {step}, shape = {df.shape}")
 
         elif step == "R9" and target_col:
-            df[f"{target_col}_smooth"] = df[target_col].rolling(window=3, min_periods=1).mean()
+            df[f"{target_col}_smooth"] = (
+                df[target_col].rolling(window=3, min_periods=1).mean()
+            )
             print(f"📐 After {step}, shape = {df.shape}")
 
         elif step == "R10" and target_col:
@@ -242,8 +261,8 @@ def apply_preprocessing(data_path, steps, output_path, time_col, target_col=None
             if n == 0:
                 raise ValueError("No data points in target column for FFT.")
             yf = fft(y)
-            xf = fftfreq(n, 1)[:n // 2]
-            amplitudes = 2.0 / n * np.abs(yf[:n // 2])
+            xf = fftfreq(n, 1)[: n // 2]
+            amplitudes = 2.0 / n * np.abs(yf[: n // 2])
 
             df.loc[0, "fft_max_amplitude"] = np.max(amplitudes)
             df.loc[0, "fft_main_frequency"] = xf[np.argmax(amplitudes)]
@@ -251,7 +270,9 @@ def apply_preprocessing(data_path, steps, output_path, time_col, target_col=None
             df.loc[0, "fft_std_amplitude"] = np.std(amplitudes)
             print("📈 FFT features added to output.")
     if df.empty:
-        raise ValueError("❌ Preprocessing resulted in an empty dataframe. Check your steps.")
+        raise ValueError(
+            "❌ Preprocessing resulted in an empty dataframe. Check your steps."
+        )
     df.to_csv(output_path, index=False)
     print(f"\n✅ Output saved to {output_path}")
 
@@ -266,7 +287,6 @@ def validate_processing(data_path, time_col):
 
     for i in range(1, window_size + 1):
         df[f"{target_col}_t-{i}"] = df[target_col].shift(i)
-
 
     df = df.dropna().reset_index(drop=True)
 
@@ -283,12 +303,11 @@ def validate_processing(data_path, time_col):
     # Check the correlation bwtween the variables
     for col in X.columns:
         if np.issubdtype(X[col].dtype, np.datetime64):
-            continue  
+            continue
         corr = np.corrcoef(X[col], y)[0, 1]
         if abs(corr) > 0.95:
-            print(f"⚠️ WARNING: High correlation between {col} and target ({corr:.3f}) — possible leakage.")
+            print(
+                f"⚠️ WARNING: High correlation between {col} and target ({corr:.3f}) — possible leakage."
+            )
 
     print(f"✅ Data ready: X_train = {X_train.shape}, X_test = {X_test.shape}")
-
-
-

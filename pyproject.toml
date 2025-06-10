@@ -15,3 +15,19 @@ pdpcli = "pdpcli.cli:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.black]
+line-length = 88
+target-version = ["py39"]
+skip-string-normalization = false
+
+[tool.flake8]
+max-line-length = 75
+exclude = ["venv", "__pycache__", ".git", "build"]
+ignore = ["E203", "W503"]  # Compatible with Black
+
+[tool.mypy]
+python_version = 3.9
+ignore_missing_imports = true
+disallow_untyped_defs = true
+check_untyped_defs = true
