@@ -1,6 +1,7 @@
 # pdpcli
 
 Piggy's data processing CLI (PDPCLI) utility
+This Python package aims to compare the performance impact of feature engineering pipelines under different optimized execution orders while keeping the feature set consistent.
 ## Set up
 `python experiments/evaluate.py` for starting the project.
 ## Guidance
